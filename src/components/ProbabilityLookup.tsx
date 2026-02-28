@@ -10,8 +10,15 @@ const MAX_ATTACKERS = 3000;
 const MAX_DEFENDERS = 3000;
 
 export default function ProbabilityLookup({ theme }: Props) {
-  const [attackers, setAttackers] = useState(10);
-  const [defenders, setDefenders] = useState(5);
+  const [attackerInput, setAttackerInput] = useState("10");
+  const [defenderInput, setDefenderInput] = useState("5");
+
+  function clamp(val: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, val));
+  }
+
+  const attackers = clamp(Number(attackerInput) || 1, 1, MAX_ATTACKERS);
+  const defenders = clamp(Number(defenderInput) || 1, 1, MAX_DEFENDERS);
 
   const prob = lookupOdds(attackers, defenders);
   const pct = isNaN(prob) ? null : Math.round(prob * 1000) / 10;
@@ -39,10 +46,6 @@ export default function ProbabilityLookup({ theme }: Props) {
     textTransform: "uppercase",
   };
 
-  function clamp(val: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, val));
-  }
-
   return (
     <div>
       <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>
@@ -59,10 +62,9 @@ export default function ProbabilityLookup({ theme }: Props) {
             type="number"
             min={1}
             max={MAX_ATTACKERS}
-            value={attackers}
-            onChange={(e) =>
-              setAttackers(clamp(Number(e.target.value), 1, MAX_ATTACKERS))
-            }
+            value={attackerInput}
+            onChange={(e) => setAttackerInput(e.target.value)}
+            onBlur={() => setAttackerInput(String(attackers))}
             style={inputStyle}
           />
         </label>
@@ -72,10 +74,9 @@ export default function ProbabilityLookup({ theme }: Props) {
             type="number"
             min={1}
             max={MAX_DEFENDERS}
-            value={defenders}
-            onChange={(e) =>
-              setDefenders(clamp(Number(e.target.value), 1, MAX_DEFENDERS))
-            }
+            value={defenderInput}
+            onChange={(e) => setDefenderInput(e.target.value)}
+            onBlur={() => setDefenderInput(String(defenders))}
             style={inputStyle}
           />
         </label>
