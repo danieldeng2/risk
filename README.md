@@ -1,23 +1,25 @@
 # Risk Game Calculator
 
-A web app that calculates the probability of an attacker winning a battle in the board game [Risk](<https://en.wikipedia.org/wiki/Risk_(game)>).
+A web app that calculates battle odds for the board game [Risk](https://en.wikipedia.org/wiki/Risk_(game)).
 
-Try it out at: [https://danieldeng2.github.io/risk/](https://danieldeng2.github.io/risk/).
+Try it out at: [https://danieldeng2.github.io/risk/](https://danieldeng2.github.io/risk/)
 
-## Usage
+## Features
 
-Two views are available via the tabs at the top:
+Three tabs are available at the top of the page:
 
-**Probability Lookup** — Enter attacker and defender troop counts to instantly see the attacker's win probability, colour-coded green (≥70%), yellow (50–70%), or red (<50%).
+**Min Attackers** — Enter a defender count and drag the desired win probability slider to instantly see the minimum number of attackers needed to achieve that win rate, along with the exact probability at that count.
 
-**Troops Needed** — A table showing how many extra attackers (beyond matching the defenders 1:1) are required to reach 50/60/70/80/90% win probability for each defender count up to 150.
+**Probability Calculator** — Enter attacker and defender troop counts to instantly see the attacker's win probability, colour-coded green (≥70%), yellow (50–70%), or red (<50%).
+
+**Lookup Table** — A table showing how many extra attackers (beyond matching the defenders 1:1) are required to reach 50/60/70/80/90% win probability for each defender count up to 150.
 
 ## Build
 
 ```bash
 npm install
+npm run dev     # local dev server (also accessible on your LAN)
 npm run build   # outputs to dist/
-npm run dev     # local dev server
 ```
 
 Deployed automatically to GitHub Pages on every push to `main`.
