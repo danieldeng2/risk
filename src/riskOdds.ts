@@ -82,6 +82,24 @@ function computeAttackerWinRates(
 }
 
 /**
+ * Find the minimum attacker count needed to win against `defenders` with at least `threshold` probability.
+ * Returns maxAttackers if the threshold cannot be reached within the cap.
+ */
+export function findMinAttackers(defenders: number, threshold: number, maxAttackers = 3000): number {
+  if (defenders <= 0) return 1;
+  const size = defenders + 1;
+  let prev2: Float64Array<ArrayBuffer> = new Float64Array(size);
+  let prev: Float64Array<ArrayBuffer> = new Float64Array(size);
+  for (let attackerCount = 1; attackerCount <= maxAttackers; attackerCount++) {
+    const rates = computeAttackerWinRates(attackerCount, prev, prev2, size);
+    if (rates[defenders] >= threshold) return attackerCount;
+    prev2 = prev;
+    prev = rates;
+  }
+  return maxAttackers;
+}
+
+/**
  * Look up P(attacker wins) for exact troop counts.
  * Computes only the columns needed, using O(defenders) memory.
  */

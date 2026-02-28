@@ -51,8 +51,9 @@ export default function TroopsNeeded({ tableData, theme }: Props) {
         Troops Needed
       </h2>
       <p style={{ fontSize: 13, color: theme.muted, marginBottom: 20 }}>
-        Extra attackers needed beyond defender count (+2 means 2 more attackers than defenders).
-        Green = fewer attackers than defenders needed.
+        Minimum extra attackers needed beyond the defender count to win with
+        the given confidence. +3 against 10 defenders = 13 attackers needed for that win rate.
+        Green = fewer attackers than defenders required.
       </p>
 
       <div style={{ overflowY: 'auto', maxHeight: 520, borderRadius: 8, border: `1px solid ${theme.border}` }}>

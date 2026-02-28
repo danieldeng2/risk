@@ -2,8 +2,15 @@ import { useMemo, useState } from 'react'
 import { buildTroopsTable } from './riskOdds'
 import ProbabilityLookup from './components/ProbabilityLookup'
 import TroopsNeeded from './components/TroopsNeeded'
+import AttackersNeeded from './components/AttackersNeeded'
 
-type Tab = 'lookup' | 'table'
+type Tab = 'lookup' | 'table' | 'attackers'
+
+const TAB_LABEL: Record<Tab, string> = {
+  lookup:    'Probability Calculator',
+  table:     'Lookup Table',
+  attackers: 'Min Attackers',
+}
 
 const theme = {
   bg: '#1a1a2e',
@@ -15,7 +22,7 @@ const theme = {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('lookup')
+  const [tab, setTab] = useState<Tab>('attackers')
   const tableData = useMemo(() => buildTroopsTable(150), [])
 
   return (
@@ -30,7 +37,7 @@ export default function App() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {(['lookup', 'table'] as Tab[]).map((t) => (
+          {(['attackers', 'lookup', 'table'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -46,7 +53,7 @@ export default function App() {
                 transition: 'background 0.15s',
               }}
             >
-              {t === 'lookup' ? 'Probability Lookup' : 'Troops Needed'}
+              {TAB_LABEL[t]}
             </button>
           ))}
         </div>
@@ -62,8 +69,10 @@ export default function App() {
         >
           {tab === 'lookup' ? (
             <ProbabilityLookup theme={theme} />
-          ) : (
+          ) : tab === 'table' ? (
             <TroopsNeeded tableData={tableData} theme={theme} />
+          ) : (
+            <AttackersNeeded theme={theme} />
           )}
         </div>
       </div>
