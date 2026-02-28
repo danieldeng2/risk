@@ -109,7 +109,7 @@ export default function ProbabilityLookup({ theme }: Props) {
             marginBottom: 16,
           }}
         >
-          {pct === null ? "—" : `${pct.toFixed(1)}%`}
+          {pct === null ? "—" : `${pct.toFixed(2)}%`}
         </div>
         <OddsBar prob={prob ?? 0} />
       </div>

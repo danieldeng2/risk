@@ -41,28 +41,41 @@ function computeAttackerWinRates(
   for (let defCount = 1; defCount < maxDefenders; defCount++) {
     if (attackers <= 3 && defCount <= 3) continue; // already set from lookup table
 
+    // Solo attacker
+    // 55/6³  : loosing 1 defender (25.46%)
+    // 161/6³ : loosing 1 attacker (attacker looses, 74.54%)
     if (attackers === 1) {
-      // Solo attacker: each defender reduces chances by 74.5%
-      rates[defCount] = 0.255 * rates[defCount - 1];
+      rates[defCount] = (55 / 216) * rates[defCount - 1];
       continue;
     }
+
+    // Two attacker
+    // 295/6⁴  : loosing 2 defender (22.76%)
+    // 420/6⁴ : loosing 1 attacker, 1 defender (32.41%)
+    // 581/6⁴ : loosing 2 attacker (attacker looses, 44.83%)
     if (attackers === 2) {
-      // Two attackers: can lose 2 at once (22.8%) or trade 1 each (32.4%)
       rates[defCount] =
-        0.228 * (defCount >= 2 ? rates[defCount - 2] : 0) +
-        0.324 * prev[defCount - 1];
+        (295 / 1296) * (defCount >= 2 ? rates[defCount - 2] : 0) +
+        (420 / 1296) * prev[defCount - 1];
       continue;
     }
+
+    // One defender left:
+    // 855/6⁴ : loosing 1 defender (attacker wins, 65.97%)
+    // 441/6⁴ : loosing 1 attacker (34.03%)
     if (defCount === 1) {
-      // One defender left: attacker wins outright 66% of rounds
-      rates[1] = 0.66 + 0.34 * prev[1];
+      rates[1] = 855 / 1296 + (441 / 1296) * prev[1];
       continue;
     }
-    // Full engagement: attacker eliminates 2 defenders (37.2%), trades (33.6%), or loses ground (29.2%)
+
+    // Full engagement
+    // 2890/6⁵ : 2 defenders lost (37.17%)
+    // 2611/6⁵ : 1 each lost (33.58%)
+    // 2275/6⁵ : 2 attackers lost (29.26%)
     rates[defCount] =
-      0.372 * rates[defCount - 2] +
-      0.292 * prev2[defCount] +
-      0.336 * prev[defCount - 1];
+      (2890 / 7776) * rates[defCount - 2] +
+      (2611 / 7776) * prev[defCount - 1] +
+      (2275 / 7776) * prev2[defCount];
   }
 
   return rates;
