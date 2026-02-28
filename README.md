@@ -1,6 +1,6 @@
 # Risk Game Calculator
 
-A web app that calculates battle odds for the board game [Risk](https://en.wikipedia.org/wiki/Risk_(game)).
+A web app that calculates battle odds for the board game [Risk](<https://en.wikipedia.org/wiki/Risk_(game)>).
 
 Try it out at: [https://danieldeng2.github.io/risk/](https://danieldeng2.github.io/risk/)
 
