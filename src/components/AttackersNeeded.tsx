@@ -73,7 +73,7 @@ export default function AttackersNeeded({ theme }: Props) {
         </label>
         <label style={labelStyle}>
           <span>
-            Confidence —{" "}
+            Desired Win Probability —{" "}
             <span style={{ color: confidenceColor(confidence), fontWeight: 700 }}>
               {confidence}%
             </span>

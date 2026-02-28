@@ -1,4 +1,4 @@
-# Risk Odds Calculator
+# Risk Game Calculator
 
 A web app that calculates the probability of an attacker winning a battle in the board game [Risk](<https://en.wikipedia.org/wiki/Risk_(game)>).
 
