@@ -7,117 +7,163 @@ export interface TroopsRow {
   p90: number;
 }
 
-/**
- * Compute a 2D odds table using dynamic programming.
- * odds[defender][attacker] = P(attacker wins) when there are
- * `attacker` attacking troops and `defender` defending troops.
- *
- * Ported directly from risk.py calc_odds().
- */
-export function calcOdds(maxAttackers = 60, maxDefenders = 40): Float64Array[] {
-  const odds: Float64Array[] = Array.from(
-    { length: maxDefenders },
-    () => new Float64Array(maxAttackers),
-  );
+// Exact win probabilities for small battles (≤3 attackers vs ≤3 defenders).
+const BASE: Record<number, Record<number, number>> = {
+  1: { 1: 0.4129, 2: 0.1036, 3: 0.0272 },
+  2: { 1: 0.7538, 2: 0.3602, 3: 0.2051 },
+  3: { 1: 0.9192, 2: 0.6561, 3: 0.4693 },
+};
 
-  // Base cases: hardcoded single-battle probabilities (1-3 vs 1-3)
-  odds[1][1] = 0.4129;
-  odds[1][2] = 0.7538;
-  odds[1][3] = 0.9192;
+/** Win probability for each defender count [0..maxDefenders-1], given exactly `attackers` troops.
+ *  Reads the two preceding attacker counts from `prev` and `prev2`. */
+function computeAttackerWinRates(
+  attackers: number,
+  prev: Float64Array<ArrayBuffer>,
+  prev2: Float64Array<ArrayBuffer>,
+  maxDefenders: number,
+): Float64Array<ArrayBuffer> {
+  const rates = new Float64Array(maxDefenders);
 
-  odds[2][1] = 0.1036;
-  odds[2][2] = 0.3602;
-  odds[2][3] = 0.6561;
+  // No defenders left — attacker wins
+  rates[0] = 1;
 
-  odds[3][1] = 0.0272;
-  odds[3][2] = 0.2051;
-  odds[3][3] = 0.4693;
-
-  // Boundary: 0 defenders → attacker wins
-  for (let a = 1; a < maxAttackers; a++) {
-    odds[0][a] = 1;
-  }
-  // Boundary: 0 attackers → attacker loses (already 0 from Float64Array init)
-
-  // Fill recurrences (same loop order as Python)
-  for (let a = 1; a < maxAttackers; a++) {
-    for (let d = 1; d < maxDefenders; d++) {
-      if (a <= 3 && d <= 3) continue; // covered by base cases
-
-      if (a === 2) {
-        odds[d][a] =
-          0.228 * odds[d - 2][a] +
-          0.448 * odds[d][a - 2] +
-          0.324 * odds[d - 1][a - 1];
-        continue;
-      }
-      if (a === 1) {
-        odds[d][a] = 0.255 * odds[d - 1][a] + 0.745 * odds[d][a - 1];
-        continue;
-      }
-      if (d === 1) {
-        odds[d][a] = 0.66 * odds[d - 1][a] + 0.34 * odds[d][a - 1];
-        continue;
-      }
-      // General case: d >= 2, a >= 3
-      odds[d][a] =
-        0.372 * odds[d - 2][a] +
-        0.292 * odds[d][a - 2] +
-        0.336 * odds[d - 1][a - 1];
+  // Small battles (≤3 vs ≤3): use exact lookup table
+  if (attackers <= 3) {
+    for (
+      let defCount = 1;
+      defCount <= 3 && defCount < maxDefenders;
+      defCount++
+    ) {
+      rates[defCount] = BASE[attackers][defCount];
     }
   }
 
-  return odds;
+  for (let defCount = 1; defCount < maxDefenders; defCount++) {
+    if (attackers <= 3 && defCount <= 3) continue; // already set from lookup table
+
+    if (attackers === 1) {
+      // Solo attacker: each defender reduces chances by 74.5%
+      rates[defCount] = 0.255 * rates[defCount - 1];
+      continue;
+    }
+    if (attackers === 2) {
+      // Two attackers: can lose 2 at once (22.8%) or trade 1 each (32.4%)
+      rates[defCount] =
+        0.228 * (defCount >= 2 ? rates[defCount - 2] : 0) +
+        0.324 * prev[defCount - 1];
+      continue;
+    }
+    if (defCount === 1) {
+      // One defender left: attacker wins outright 66% of rounds
+      rates[1] = 0.66 + 0.34 * prev[1];
+      continue;
+    }
+    // Full engagement: attacker eliminates 2 defenders (37.2%), trades (33.6%), or loses ground (29.2%)
+    rates[defCount] =
+      0.372 * rates[defCount - 2] +
+      0.292 * prev2[defCount] +
+      0.336 * prev[defCount - 1];
+  }
+
+  return rates;
 }
 
 /**
  * Look up P(attacker wins) for exact troop counts.
- * Returns a value in [0, 1].
+ * Computes only the columns needed, using O(defenders) memory.
  */
-export function lookupOdds(
-  odds: Float64Array[],
-  attackers: number,
-  defenders: number,
-): number {
+export function lookupOdds(attackers: number, defenders: number): number {
   if (defenders <= 0) return 1;
   if (attackers <= 0) return 0;
-  if (defenders >= odds.length || attackers >= odds[0].length) return NaN;
-  return odds[defenders][attackers];
-}
 
-/**
- * For each defender count, return the minimum attacker count
- * needed to exceed `threshold` win probability.
- */
-export function getAttackersForPercentile(
-  odds: Float64Array[],
-  threshold: number,
-): number[] {
-  return odds.map((row) => {
-    const idx = row.findIndex((p) => p > threshold);
-    return idx === -1 ? row.length : idx;
-  });
-}
+  const size = defenders + 1;
+  let prev2: Float64Array<ArrayBuffer> = new Float64Array(size); // attacker count - 2 (all zeros = 0 attackers → loss)
+  let prev: Float64Array<ArrayBuffer> = new Float64Array(size); // attacker count - 1 (starts as a=0, all zeros)
+  // rates[0] = 1 handled inside computeAttackerWinRates
 
-/**
- * Build a table of "extra attackers needed" (attackers - defenders)
- * for 50/60/70/80/90% win probability thresholds.
- * Rows go from defenders=1 to defenders=maxDefenders-1.
- */
-export function buildTroopsTable(odds: Float64Array[]): TroopsRow[] {
-  const thresholds = [0.5, 0.6, 0.7, 0.8, 0.9];
-  const columns = thresholds.map((t) => getAttackersForPercentile(odds, t));
-
-  const rows: TroopsRow[] = [];
-  for (let d = 1; d < odds.length; d++) {
-    rows.push({
-      defenders: d,
-      p50: columns[0][d] - d,
-      p60: columns[1][d] - d,
-      p70: columns[2][d] - d,
-      p80: columns[3][d] - d,
-      p90: columns[4][d] - d,
-    });
+  for (let attackerCount = 1; attackerCount <= attackers; attackerCount++) {
+    const rates = computeAttackerWinRates(attackerCount, prev, prev2, size);
+    prev2 = prev;
+    prev = rates;
   }
-  return rows;
+
+  return prev[defenders];
+}
+
+/**
+ * Build a table of "extra attackers needed" (attackers - defenders) for
+ * 50/60/70/80/90% win probability thresholds, for each defender count 1..maxDefenders.
+ *
+ * Uses a rolling window: O(maxDefenders) memory regardless of how many attacker
+ * columns are computed.
+ */
+export function buildTroopsTable(
+  maxDefenders: number,
+  maxAttackers = 500,
+): TroopsRow[] {
+  const thresholds = [0.5, 0.6, 0.7, 0.8, 0.9];
+  const numThresholds = thresholds.length;
+
+  // found[defCount][i] = first attacker count that exceeded the threshold, or -1 if not yet
+  const found: number[][] = Array.from({ length: maxDefenders + 1 }, () =>
+    new Array<number>(numThresholds).fill(-1),
+  );
+
+  let prev2: Float64Array<ArrayBuffer> = new Float64Array(maxDefenders + 1);
+  let prev: Float64Array<ArrayBuffer> = new Float64Array(maxDefenders + 1);
+  let allFound = false;
+
+  for (
+    let attackerCount = 1;
+    attackerCount <= maxAttackers && !allFound;
+    attackerCount++
+  ) {
+    const rates = computeAttackerWinRates(
+      attackerCount,
+      prev,
+      prev2,
+      maxDefenders + 1,
+    );
+
+    // Check newly-exceeded thresholds for each defender count
+    allFound = true;
+    for (let defCount = 1; defCount <= maxDefenders; defCount++) {
+      for (let i = 0; i < numThresholds; i++) {
+        if (found[defCount][i] === -1 && rates[defCount] > thresholds[i]) {
+          found[defCount][i] = attackerCount;
+        }
+        if (found[defCount][i] === -1) allFound = false;
+      }
+    }
+
+    prev2 = prev;
+    prev = rates;
+  }
+
+  return Array.from({ length: maxDefenders }, (_, idx) => {
+    const defCount = idx + 1;
+    return {
+      defenders: defCount,
+      p50:
+        found[defCount][0] === -1
+          ? maxAttackers
+          : found[defCount][0] - defCount,
+      p60:
+        found[defCount][1] === -1
+          ? maxAttackers
+          : found[defCount][1] - defCount,
+      p70:
+        found[defCount][2] === -1
+          ? maxAttackers
+          : found[defCount][2] - defCount,
+      p80:
+        found[defCount][3] === -1
+          ? maxAttackers
+          : found[defCount][3] - defCount,
+      p90:
+        found[defCount][4] === -1
+          ? maxAttackers
+          : found[defCount][4] - defCount,
+    };
+  });
 }

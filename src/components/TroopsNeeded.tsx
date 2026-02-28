@@ -18,7 +18,7 @@ function cellTextColor(extra: number): string {
 }
 
 function formatExtra(extra: number): string {
-  if (extra >= 59) return '>59'
+  if (extra >= 500) return '>499'
   return extra >= 0 ? `+${extra}` : `${extra}`
 }
 

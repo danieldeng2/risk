@@ -1,31 +1,27 @@
 # Risk Odds Calculator
 
-A Python script that calculates the probability of an attacker winning a battle in the board game [Risk](https://en.wikipedia.org/wiki/Risk_(game)).
-
-## Overview
-
-In Risk, battles are resolved by rolling dice — attackers roll up to 3 dice and defenders roll up to 2 dice, with losses assigned by comparing the highest rolls. This script computes the probability that an attacker will fully eliminate a defending army, given any number of attacking and defending troops.
-
-It also prints a table showing how many **extra** attacking troops are needed to win at various confidence levels (50%, 60%, 70%, 80%, 90%).
+A web app that calculates the probability of an attacker winning a battle in the board game [Risk](https://en.wikipedia.org/wiki/Risk_(game)).
 
 ## Usage
 
+Two views are available via the tabs at the top:
+
+**Probability Lookup** — Enter attacker and defender troop counts to instantly see the attacker's win probability, colour-coded green (≥70%), yellow (50–70%), or red (<50%).
+
+**Troops Needed** — A table showing how many extra attackers (beyond matching the defenders 1:1) are required to reach 50/60/70/80/90% win probability for each defender count up to 150.
+
+## Build
+
 ```bash
-python risk.py
+npm install
+npm run build   # outputs to dist/
+npm run dev     # local dev server
 ```
 
-The script outputs a table like:
-
-```
-defenders: 1    50%: 1    60%: 2    70%: 2    80%: 3    90%: 4
-defenders: 2    50%: 2    60%: 3    70%: 4    80%: 5    90%: 7
-...
-```
-
-Each row shows, for a given number of defenders, how many **additional** troops (beyond matching the defenders 1:1) are needed to achieve the listed win probability.
+Deployed automatically to GitHub Pages on every push to `main`.
 
 ## How It Works
 
-- `calc_odds(max_attackers, max_defenders)` — builds a 2D table of win probabilities using known single-battle odds and a recurrence relation derived from multi-dice combat rules.
-- `get_num_troops_for_percentiles(odds, percentile)` — for each defender count, finds the minimum attacker count needed to exceed a given win probability.
-- `print_troops_for_percentiles(odds)` — prints the full table for the 50th–90th percentile thresholds.
+In Risk, battles resolve by comparing dice rolls — attackers roll up to 3 dice, defenders up to 2. This produces known per-round loss probabilities, which are used as base cases for a dynamic programming recurrence over total troop counts.
+
+The core function `computeAttackerWinRates(attackers, prev, prev2)` computes the win probability for every defender count in a single pass, using only the two previously computed attacker columns. This rolling 3-buffer approach keeps memory at O(defenders) regardless of attacker count.

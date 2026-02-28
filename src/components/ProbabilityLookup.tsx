@@ -3,18 +3,17 @@ import { lookupOdds } from "../riskOdds";
 import OddsBar from "./OddsBar";
 
 interface Props {
-  odds: Float64Array[];
   theme: Record<string, string>;
 }
 
-const MAX_ATTACKERS = 59;
-const MAX_DEFENDERS = 39;
+const MAX_ATTACKERS = 3000;
+const MAX_DEFENDERS = 3000;
 
-export default function ProbabilityLookup({ odds, theme }: Props) {
+export default function ProbabilityLookup({ theme }: Props) {
   const [attackers, setAttackers] = useState(10);
   const [defenders, setDefenders] = useState(5);
 
-  const prob = lookupOdds(odds, attackers, defenders);
+  const prob = lookupOdds(attackers, defenders);
   const pct = isNaN(prob) ? null : Math.round(prob * 1000) / 10;
 
   const inputStyle: React.CSSProperties = {
@@ -25,7 +24,7 @@ export default function ProbabilityLookup({ odds, theme }: Props) {
     fontSize: 20,
     fontWeight: 700,
     padding: "8px 12px",
-    width: 90,
+    width: 130,
     outline: "none",
   };
 

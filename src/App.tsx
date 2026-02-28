@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { calcOdds, buildTroopsTable } from './riskOdds'
+import { buildTroopsTable } from './riskOdds'
 import ProbabilityLookup from './components/ProbabilityLookup'
 import TroopsNeeded from './components/TroopsNeeded'
 
@@ -16,8 +16,7 @@ const theme = {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('lookup')
-  const odds = useMemo(() => calcOdds(), [])
-  const tableData = useMemo(() => buildTroopsTable(odds), [odds])
+  const tableData = useMemo(() => buildTroopsTable(150), [])
 
   return (
     <div style={{ minHeight: '100vh', background: theme.bg, color: theme.text, padding: '24px 16px' }}>
@@ -62,7 +61,7 @@ export default function App() {
           }}
         >
           {tab === 'lookup' ? (
-            <ProbabilityLookup odds={odds} theme={theme} />
+            <ProbabilityLookup theme={theme} />
           ) : (
             <TroopsNeeded tableData={tableData} theme={theme} />
           )}
