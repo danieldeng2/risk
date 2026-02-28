@@ -16,7 +16,7 @@ function confidenceColor(pct: number): string {
 
 export default function AttackersNeeded({ theme }: Props) {
   const [defenderInput, setDefenderInput] = useState("10");
-  const [confidence, setConfidence] = useState(70);
+  const [confidence, setConfidence] = useState(55);
 
   function clamp(val: number, min: number, max: number) {
     return Math.max(min, Math.min(max, val));
@@ -58,7 +58,14 @@ export default function AttackersNeeded({ theme }: Props) {
       </h2>
 
       {/* Inputs */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 32 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+          marginBottom: 32,
+        }}
+      >
         <label style={labelStyle}>
           Defenders (1–{MAX_DEFENDERS})
           <input
@@ -74,7 +81,9 @@ export default function AttackersNeeded({ theme }: Props) {
         <label style={labelStyle}>
           <span>
             Desired Win Probability —{" "}
-            <span style={{ color: confidenceColor(confidence), fontWeight: 700 }}>
+            <span
+              style={{ color: confidenceColor(confidence), fontWeight: 700 }}
+            >
               {confidence}%
             </span>
           </span>
