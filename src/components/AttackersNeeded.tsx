@@ -16,7 +16,7 @@ function confidenceColor(pct: number): string {
 
 export default function AttackersNeeded({ theme }: Props) {
   const [defenderInput, setDefenderInput] = useState("10");
-  const [confidence, setConfidence] = useState(55);
+  const [confidence, setConfidence] = useState(60);
 
   function clamp(val: number, min: number, max: number) {
     return Math.max(min, Math.min(max, val));
